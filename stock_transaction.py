@@ -8,13 +8,12 @@ import math
 # 插入一筆 "Buy" 交易到 Transactions_Stock_2330，並取得生成的 stock_serial_id
 def add_buy_transaction(user, password, date, 
         stock_id, quantity, price, transaction_tax, transaction_cost):
-    user_database_name = f"user_{user}_stock_db"
+    user_database_name = f"{user}_stock_db"
     user_inventory_table = f"inventory"
     user_transaction_stock_table = f"transactions_stock_{stock_id}"
     user_transaction_year_table = f"transactions_year_{date.year}"
     print(f"{user_inventory_table}_{user_transaction_stock_table}_{user_transaction_year_table}")
-    connect_to_db(user, password, user_database_name)
-    print(check_table_exists(user_transaction_stock_table, user, password))
+    #connect_to_db(user, password, user_database_name)
     if not check_table_exists(user_transaction_stock_table, user, password):
         print(f"table {user_transaction_stock_table} is not exist") 
         create_stock_id_table(user, password, user_database_name, stock_id)
@@ -35,14 +34,14 @@ def add_buy_transaction(user, password, date,
 
 
 def add_cash_dividend(user, password, date, stock_id, price):
-    user_database_name = f"user_{user}_stock_db"
+    user_database_name = f"{user}_stock_db"
     transID = insert_transaction_stock_cash_dividend(user, password, user_database_name,
         date, stock_id, price)
     insert_transaction_year_cash_dividend(user, password, user_database_name, 
         date, stock_id, price, transID) 
     
 def add_stock_dividend(user, password, date, stock_id, quantity):
-    user_database_name = f"user_{user}_stock_db"
+    user_database_name = f"{user}_stock_db"
     transID = insert_transaction_stock_stock_dividend(user, password, user_database_name,
         date, stock_id, quantity)
     add_inventory(user, password, user_database_name, 
@@ -73,7 +72,7 @@ def load_sell_info_by_id(df, trans_id, sell_quantity):
     return df.loc[df['id'] == trans_id]
     
 
-    
+# 2024/10/31 work    
 def add_sell_transaction(user, password, date,
         stock_id, quantity, price, transaction_tax, securities_transaction_tax):
 
@@ -147,7 +146,7 @@ def add_sell_transaction(user, password, date,
         remain_inventory_recode.at[len(remain_inventory_recode) - 1, 'remaining_quantity'] = remaining_buy_quantity
         remain_inventory_recode.at[len(remain_inventory_recode) - 1, 'remaining_cost'] = remaining_buy_cost
         print(remain_inventory_recode)
-        print(f"計算損益成本 {entry_quantity} {allocated_buy_cost}")
+        print(f"計算損益成本: 賣{entry_quantity}股, 損益{allocated_buy_cost}")
         
         # transaction year table
         allocated_sell_rate = entry_quantity / remaining_sell_quantity 
@@ -170,24 +169,32 @@ def add_sell_transaction(user, password, date,
     print("Start to write to DB...")
     # insert transaction stock to get sell ID
     user_database_name = f"{user}_stock_db"
-    ransaction_sell_id = insert_transaction_stock_sell(user, password, user_database_name,
-       date, stock_id, quantity, price, transaction_tax, securities_transaction_tax)
-    transaction_sell_id = 3
-    print(f"transaction_sell_id: {transaction_sell_id}") 
+
+    ##transaction_sell_id = insert_transaction_stock_sell(user, password, user_database_name,
+    ##   date, stock_id, quantity, price, transaction_tax, securities_transaction_tax)
 
     # update inventory table
-    #for index, row in remain_inventory_recode.iterrows():
-    #    print(f"第 {index + 1} 列資料: {row.to_dict()}")
-    #    insert_transaction_year_sell(user, password, transaction_year_table_name, date, 
-    #        stock_id, row['quantity'], row['profit_or_loss'], row['buy_id'], transaction_sell_id)
+    for index, row in remain_inventory_recode.iterrows():
+        if int(row['remaining_quantity']) > 0 : 
+            update_inventory(user, password, 
+                int(row['remaining_quantity']), 
+                float(row['remaining_cost']), 
+                int(row['id']))
+        else:
+            delete_inventory(user, password, int(row['id']))
+            print("delete id")
+
+    print("_" * 20)
+
     # insert transaction year table
-    transaction_year_table_name = f"transactions_year_{date.year}"
-    database_name = f"{user}_stock_db"
-    for index, row in entry_stock_year_recode.iterrows():
-        print(f"第 {index + 1} 列資料: {row.to_dict()}")
-        insert_transaction_year_sell(user, password, database_name, date, 
-            stock_id, row['quantity'], row['profit_or_loss'], row['buy_id'], 
-            transaction_sell_id)
+
+    ##transaction_year_table_name = f"transactions_year_{date.year}"
+    ##database_name = f"{user}_stock_db"
+    ##for index, row in entry_stock_year_recode.iterrows():
+    ##    print(f"第 {index + 1} 列資料: {row.to_dict()}")
+    ##    insert_transaction_year_sell(user, password, database_name, date, 
+    ##        stock_id, row['quantity'], row['profit_or_loss'], row['buy_id'], 
+    ##        transaction_sell_id)
 
 
 

@@ -1,7 +1,7 @@
 import psycopg2
 import pandas as pd
 import csv
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 def dump_table(username, password, database, table, host='localhost', port='5432'):
@@ -16,37 +16,58 @@ def dump_table(username, password, database, table, host='localhost', port='5432
         print(f"Error inserting data: {e}")
         connection.rollback()
 
+def list_tables(user, password, dbname, host='localhost', port='5432'):
+    try:
+        # Create an engine
+        engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{dbname}')
+        
+        # Use SQLAlchemy's inspector to retrieve all tables
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        
+        # Print the list of tables
+        if tables:
+            print("Tables in the database:")
+            for table in tables:
+                print(table)
+        else:
+            print("No tables found in the database.")
+    
+    except SQLAlchemyError as e:
+        print(f"An error occurred while listing tables: {e}")
+    
+    finally:
+        # Dispose the engine to close all connections
+        engine.dispose()
+        print("Connection closed.")
 
 
 def check_table_exists(table_name, username, password, host='localhost', port='5432'):
     try:
-        connection = get_connection()
-        cursor = connection.cursor()
-
-        # 查詢表是否存在
-        check_table_query = """
-        SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_name = %s
-        );
-        """
-        cursor.execute(check_table_query, (table_name,))
-        exists = cursor.fetchone()[0]
-
-        if exists:
-            print(f"Table '{table_name}' exists.")
-        else:
-            print(f"Table '{table_name}' does not exist.")
+        # Create an engine
+        dbname = f"{username}_stock_db"
+        engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{dbname}')
         
-        return exists
+        # Use SQLAlchemy's inspector to check if the table exists
+        inspector = inspect(engine)
+        table_exists = table_name in inspector.get_table_names()
+        
+        if table_exists:
+            print(f"Table '{table_name}' exists in the database '{dbname}'.")
+        else:
+            print(f"Table '{table_name}' does not exist in the database '{dbname}'.")
 
-    except psycopg2.Error as e:
-        print(f"Error while checking if table exists: {e}")
+        return table_exists
 
+    except SQLAlchemyError as e:
+        print(f"An error occurred while checking for the table: {e}")
+        return False
+    
     finally:
-        if cursor:
-            cursor.close()
+        # Dispose the engine to close the connection
+        engine.dispose()
+        print("Connection closed.")
+
 
 def create_table(username, password, database, create_table_sql, host='localhost', port='5432'):
     try:
@@ -133,20 +154,22 @@ def insert_data(username, password, database, insert_sql, values, host='localhos
 #        return None
 
 
-def update_data(update_sql, values):
-    connection = get_connection()
-    if connection is None:
-        print("No connection to database. Please connect first.")
-        return
-
+def update_data(username, password, database, update_sql, values, host='localhost', port='5432'):
     try:
-        with connection.cursor() as cursor:
-            cursor.execute(update_sql, values)
-            connection.commit()
-            print("Data updated successfully.")
-    except psycopg2.Error as e:
-        print(f"Error updating data: {e}")
-        connection.rollback()
+        # Use SQLAlchemy to create an engine
+        engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{database}')
 
-"""
-"""
+        # Use the engine to connect and execute the SQL insert statement
+        with engine.connect() as connection:
+            result = connection.execute(text(update_sql), values)
+            connection.commit()
+
+            # If there's a value to return, like a serial ID
+            if result.returns_rows:
+                serial_id = result.fetchone()[0]  # Assuming RETURNING id returns the id in the first column
+                return serial_id
+            return None
+
+    except SQLAlchemyError as e:
+        print(f"Error occurred during insertion: {e}")
+        return None

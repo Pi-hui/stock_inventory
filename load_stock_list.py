@@ -1,31 +1,52 @@
 import psycopg2
 import pandas as pd
+from sqlalchemy import create_engine, text, inspect
+from sqlalchemy.exc import SQLAlchemyError
 
 #df = None
 stock_list = None
 def fetch_stock_list_as_df():
-    # Connect to the PostgreSQL database
-    conn = psycopg2.connect(
-        host="localhost",
-        database="stock_info",  # Use your 'stock_info' database name
-        user="ck",
-        password="woodgate"
-    )
+    username = 'ck'
+    password = 'woodgate'
+    host = 'localhost'
+    port = 5432
+    database = 'stock_info'
+    table = 'stock_list'
+    try:
+        # 使用 SQLAlchemy 建立引擎
+        engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{database}')
 
-    # SQL query to fetch all data from 'stock_list' table
-    query = "SELECT * FROM stock_list;"
+        fetch_table_sql = f"SELECT * FROM {table};"
+        df = pd.read_sql_query(fetch_table_sql, engine)
+        return df
+    except psycopg2.Error as e:
+        print(f"Error inserting data: {e}")
+        connection.rollback()
 
-    # Use pandas to execute the query and fetch data into a DataFrame
-    df = pd.read_sql_query(query, conn)
+    finally:
+        engine.dispose()
 
-    # Close the connection
-    conn.close()
+    ## Connect to the PostgreSQL database
+    #conn = psycopg2.connect(
+    #    host="localhost",
+    #    database="stock_info",  # Use your 'stock_info' database name
+    #    user="ck",
+    #    password="woodgate"
+    #)
+
+    ## SQL query to fetch all data from 'stock_list' table
+    #query = "SELECT * FROM stock_list;"
+
+    ## Use pandas to execute the query and fetch data into a DataFrame
+    #df = pd.read_sql_query(query, conn)
+
+    ## Close the connection
+    #conn.close()
 
     return df
 
 def get_stock_name_by_code(stock_code):
     global stock_list  # 聲明 stock_list 為全局變數
-    print("In get_stock_name_by_code")
     if stock_list is None:  # 檢查 stock_list 是否為 None
         stock_list = fetch_stock_list_as_df()  # 初始化 stock_list
 

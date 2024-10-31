@@ -33,8 +33,8 @@ def main_menu():
 
         if choice == '1':
             connect_to_database()
-        elif choice == '2':
-            list_all_tables()
+        #elif choice == '2':
+        #    list_all_tables()
         elif choice == '3':
             dump_table_data()
         elif choice == '4':
@@ -58,11 +58,13 @@ def connect_to_database():
     dbname = input("Enter the name of the database: ")
     connect_to_db(username, password, dbname)
 
-def list_all_tables():
+# work 2024/10/31
+def list_all_tables(user, password):
     """
     列出資料庫中的所有資料表
     """
-    list_tables()
+    dbname = f"{user}_stock_db"
+    list_tables(user, password, dbname)
 
 def dump_table_data():
     """
@@ -76,13 +78,12 @@ def dump_table_data():
     else:
         dump_table(table_name, output_format='print')
 
-def list_all_databases():
+# work 2024/10/31
+def list_all_databases(user, password):
     """
     列出 PostgreSQL 伺服器中的所有資料庫
     """
-    username = input("Enter PostgreSQL username: ")
-    password = input("Enter PostgreSQL password: ")
-    list_databases(username, password)
+    list_databases(user, password)
 
 def close_db_connection():
     """
@@ -91,8 +92,8 @@ def close_db_connection():
     close_connection()
 
 if __name__ == "__main__":
-    list_postgresql_users()
-    database_name = 'user_ck_stock_db'
+    #list_postgresql_users()
+    atabase_name = 'ck_stock_db'
 
     user = 'ck'
     password = 'woodgate'
@@ -102,6 +103,8 @@ if __name__ == "__main__":
     date_data = datetime(2024, 11,20)
     transaction_tax = math.floor(price * quantity * 0.001425 * 0.35)
     securities_transaction_tax = math.floor(price * quantity * 0.003)
+    
+    #list_all_tables(user, password)
     #create_stock_id_table(user, password, 'user_ck_stock_db', stock_id)
     #create_stock_id_table(user, password, 'user_ck_stock_db', stock_id)
     #test_insert_stock_data(user, password, 'user_ck_stock_db', 
@@ -109,7 +112,6 @@ if __name__ == "__main__":
     
     #create_transaction_year_table(user, password, 'user_ck_stock_db', 2024)
     #connect_to_database()
-    #list_tables()
     #exit(0)
     #insert_transaction_year(user, password, 'transaction_stock_2024',  
     #    date_data, stock_id, 0, price, 65, 65)
@@ -138,26 +140,26 @@ if __name__ == "__main__":
     #date_data = datetime(2024, 10,17)
     #add_buy_transaction(user, password, date_data, '2330', 4, 1088.27, 1, 4354)
 
-    #add_cash_dividend(user, password, date_data, stock_id, price)
-    #add_stock_dividend(user, password, date_data, stock_id, quantity)
+    add_cash_dividend(user, password, date_data, stock_id, price)
+    add_stock_dividend(user, password, date_data, stock_id, quantity)
 
-    stock_id = '2002'
-    date_data = datetime(2024, 11,21)
-    price = 25.7
-    quantity = 20
+    stock_id = '2'
+    date_data = datetime(2024, 11,23)
+    price = 180
+    quantity = 3000
     TradeValue = round(price * quantity, 3)
     transaction_tax = math.floor(TradeValue * 0.001425 * 0.35)
     securities_transaction_tax = math.floor(TradeValue * 0.003)
     amount = math.floor(TradeValue + transaction_tax)
     
-    #add_buy_transaction(user, password, date_data, stock_id, quantity, price, 
-    #    transaction_tax, amount)
+    add_buy_transaction(user, password, date_data, stock_id, quantity, price, 
+        transaction_tax, amount)
 
     #date_data = datetime(2024, 11,29)
-    add_sell_transaction(user, password, date_data, 
-        stock_id, quantity, price, transaction_tax, securities_transaction_tax)
-    insert_transaction_year_sell(user, password, 'ck_stock_db', date_data, 
-        stock_id, quantity, 102, 3, 5)
+    #add_sell_transaction(user, password, date_data, 
+    #    stock_id, quantity, price, transaction_tax, securities_transaction_tax)
+    #insert_transaction_year_sell(user, password, 'ck_stock_db', date_data, 
+    #    stock_id, quantity, 102, 3, 5)
     #main_menu()
     ###stock_table_name = f"transaction_stock_{stock_id}"
     ###connect_to_db('ckyeh', 'woodgate', 'postgres')

@@ -11,8 +11,8 @@ db_default_database = 'postgres'
 def create_stock_user(new_user_name, new_user_passowrd):
     create_user(db_system_name, db_system_password, new_user_name, new_user_passowrd)
     
-def create_stock_db(data_base_name):
-    create_database(data_base_name, db_system_name, db_system_password)
+def create_stock_db(database_name):
+    create_database(database_name, db_system_name, db_system_password)
 
 # Function to add a yearly transaction (insert data)
 def add_year_transaction(year, transaction_data):
@@ -42,22 +42,40 @@ def add_stock_transaction(stock_id, transaction_data):
     insert_data(insert_sql, transaction_data)
 
 # Function to delete inventory by ID
-def delete_inventory(id):
-    delete_sql = "DELETE FROM inventory WHERE id = %s;"
-    insert_data(delete_sql, (id,))
+def delete_inventory(user, password, inventory_id):
+    dbname = f"{user}_stock_db"
+    delete_inventory_id = {'id': inventory_id}
+    delete_sql = "DELETE FROM inventory WHERE id = :id;"
+    update_data(user, password, dbname, delete_sql, delete_inventory_id)
 
 # Function to update inventory details
-def update_inventory(inventory_id, new_values):
+def update_inventory(user, password, remain_quantity, remain_cost, inventory_id):
+
+    update_inventory_data = {
+        'new_quantity': remain_quantity, 
+        'new_cost': remain_cost, 
+        'id': inventory_id}
+
+    dbname = f"{user}_stock_db"
+    print(f"update_inventory_data {update_inventory_data}")
+
     update_sql = """
     UPDATE inventory
-    SET remaining_quantity = %s, remaining_cost = %s
-    WHERE id = %s;
+    SET remaining_quantity = :new_quantity, 
+        remaining_cost = :new_cost 
+    WHERE id = :id;
     """
-    update_data(update_sql, (*new_values, inventory_id))
+    update_data(user, password, dbname, update_sql, update_inventory_data)
 
 # Function to add new inventory record
 def add_inventory(user, password, database, date, stock_id, quantity, price, tax, cost, stock_fk):
-    inventory_data = (stock_id, date.strftime('%Y-%m-%d'), quantity, price, tax, quantity, cost, stock_fk)
+    inventory_data = {'id':stock_id, 
+            'date': date.strftime('%Y-%m-%d'), 
+            'quantity': quantity, 
+            'price': price, 
+            'tax': tax, 
+            'cost': cost, 
+            'fk': stock_fk}
     insert_sql = """
     INSERT INTO inventory (
         stock_symbol, 
@@ -68,7 +86,7 @@ def add_inventory(user, password, database, date, stock_id, quantity, price, tax
         remaining_quantity, 
         remaining_cost, 
         stock_id_fk)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (:id, :date, :quantity, :price, :tax, :quantity, :cost, :fk)
         RETURNING id;
     """
     insert_data(user, password, database, insert_sql, inventory_data)
@@ -77,7 +95,11 @@ def add_inventory(user, password, database, date, stock_id, quantity, price, tax
 def insert_transaction_stock_buy(user, password, database, 
         date, stock_id, quantity, price, transaction_tax):
     transaction_table = f"transactions_stock_{stock_id}"
-    insert_buy_data = (date.strftime('%Y-%m-%d'), quantity, price, 'buy', transaction_tax)
+    insert_buy_data = {'date': date.strftime('%Y-%m-%d'), 
+        'quantity': quantity, 
+        'price':    price, 
+        'type':     'buy', 
+        'transaction_tax': transaction_tax}
     
     insert_sql = f"""
     INSERT INTO {transaction_table} (
@@ -86,7 +108,8 @@ def insert_transaction_stock_buy(user, password, database,
         transaction_price, 
         transaction_type,
         transaction_tax 
-        ) VALUES (%s, %s, %s, %s, %s)
+        ) VALUES (
+            :date, :quantity, :price, :type, :transaction_tax)
         RETURNING id;
     """
     serial_id = insert_data(user, password, database, insert_sql, insert_buy_data)
@@ -159,36 +182,19 @@ def insert_transaction_stock_sell(user, password, database, date, stock_id,
     """
     serial_id = insert_data(user, password, database, insert_sql, insert_sell_data)
     return serial_id
-#def insert_transaction_stock_sell(user, password, database, date, stock_id, 
-#        quantity, price, transaction_tax, securities_transaction_tax):
-#    transaction_table = f"transactions_stock_{stock_id}"
-#    insert_buy_data = (date.strftime('%Y-%m-%d'), quantity, price, 'sell', 
-#        transaction_tax, securities_transaction_tax)
-#    
-#    insert_sql = f"""
-#    INSERT INTO {transaction_table} (
-#        transaction_date, 
-#        quantity, 
-#        transaction_price, 
-#        transaction_type,
-#        transaction_tax,
-#        securities_transaction_tax 
-#        ) VALUES (%s, %s, %s, %s, %s, %s)
-#        RETURNING id;
-#    """
-#    serial_id = insert_data(user, password, database, insert_sql, insert_buy_data)
-#    return serial_id
 
 def insert_transaction_stock_stock_dividend(user, password, database, date, stock_id, quantity):
     transaction_table = f"transactions_stock_{stock_id}"
-    insert_stock_dividend_data = (date.strftime('%Y-%m-%d'), quantity, 'dividend')
+    insert_stock_dividend_data = {'date': date.strftime('%Y-%m-%d'), 
+        'quantity': quantity, 
+        'type': 'dividend'}
     
     insert_sql = f"""
     INSERT INTO {transaction_table} (
         transaction_date, 
         quantity, 
         transaction_type
-        ) VALUES (%s, %s, %s)
+        ) VALUES (:date, :quantity, :type)
         RETURNING id;
     """
     serial_id = insert_data(user, password, database, insert_sql, insert_stock_dividend_data)
@@ -196,14 +202,16 @@ def insert_transaction_stock_stock_dividend(user, password, database, date, stoc
 
 def insert_transaction_stock_cash_dividend(user, password, database, date, stock_id, price):
     transaction_table = f"transactions_stock_{stock_id}"
-    insert_buy_data = (date.strftime('%Y-%m-%d'), price, 'dividend')
+    insert_buy_data = {'date': date.strftime('%Y-%m-%d'), 
+            'price': price, 
+            'type':  'dividend'}
     
     insert_sql = f"""
     INSERT INTO {transaction_table} (
         transaction_date, 
         transaction_price, 
         transaction_type
-        ) VALUES (%s, %s, %s)
+        ) VALUES (:date, :price, :type)
         RETURNING id;
     """
     serial_id = insert_data(user, password, database, insert_sql, insert_buy_data)
@@ -211,7 +219,10 @@ def insert_transaction_stock_cash_dividend(user, password, database, date, stock
     
 def insert_transaction_year_cash_dividend(user, password, database, date, stock_id, profit_or_loss, sellID):
     transaction_table = f"transactions_year_{date.year}"
-    insert_year_data = (date.strftime('%Y-%m-%d'), stock_id, profit_or_loss, sellID)
+    insert_year_data = {'date': date.strftime('%Y-%m-%d'), 
+        'id': stock_id, 
+        'profit_or_loss': profit_or_loss, 
+        'sell_id': sellID}
     
     insert_sql = f"""
         INSERT INTO {transaction_table} (
@@ -219,141 +230,11 @@ def insert_transaction_year_cash_dividend(user, password, database, date, stock_
             stock_symbol,
             profit_or_loss, 
             sell_id
-            ) VALUES (%s, %s, %s, %s)
+            ) VALUES (:date, :id, :profit_or_loss, :sell_id)
             RETURNING id;
         """
     serial_id = insert_data(user, password, database, insert_sql, insert_year_data)
     return serial_id
-
-#def insert_transaction_year_sell(user, password, database, date, 
-#        stock_id, quantity, profit_or_loss, buyID, sellID, host='localhost', port='5432'):
-#    
-#    # Build the connection string
-#    engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
-#    
-#    # Prepare data for insertion (wrap the tuple in a list)
-#    transaction_table = f"transactions_year_{date.year}"
-#    #insert_year_data = (date.strftime('%Y-%m-%d'), stock_id, quantity, profit_or_loss, buyID, sellID)
-#    insert_year_data = {
-#        'transaction_date': date.strftime('%Y-%m-%d'),
-#        'stock_symbol': stock_id,
-#        'quantity': quantity,
-#        'profit_or_loss': profit_or_loss,
-#        'buy_id': buyID,
-#        'sell_id': sellID
-#    }
-#    insert_sql = text(f"""
-#        INSERT INTO {transaction_table} (
-#            transaction_date, 
-#            stock_symbol,
-#            quantity,
-#            profit_or_loss, 
-#            buy_id,
-#            sell_id
-#        ) VALUES (
-#            :transaction_date, 
-#            :stock_symbol, 
-#            :quantity, 
-#            :profit_or_loss, 
-#            :buy_id, 
-#            :sell_id
-#        ) 
-#        RETURNING id;
-#    """)
-# 
-#    # Define the SQL insert statement
-#    #insert_sql = f"""
-#    #INSERT INTO {transaction_table} (
-#    #    transaction_date, 
-#    #    stock_symbol,
-#    #    quantity,
-#    #    profit_or_loss, 
-#    #    buy_id,
-#    #    sell_id
-#    #) VALUES (%s, %s, %s, %s, %s, %s)
-#    #RETURNING id;
-#    #"""
-#    
-#    try:
-#        # Connect and execute the SQL statement
-#        with engine.connect() as connection:
-#            print("database connection")
-#            print(f"insert_sql: {insert_sql}")
-#            print(f"insert_year_data: {insert_year_data}")
-#            result = connection.execute(insert_sql, insert_year_data)
-#            serial_id = result.fetchone()[0]  # Get the returning id
-#            print(f"serial_id {serial_id}")
-#        if serial_id is not None:
-#            print(f"Transaction successfully inserted with id: {serial_id}")
-#        else:
-#            print("Failed to insert transaction")
-#        return serial_id
-#
-#    except Exception as e:
-#        print(f"Error during transaction insert: {e}")
-#        return None
-
-#def insert_transaction_year_sell(user, password, database, date, 
-#        stock_id, quantity, profit_or_loss, buyID, sellID, host='localhost', port='5432'):
-#    
-#    # Build the connection string
-#    engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
-#    
-#    # Prepare data for insertion
-#    transaction_table = f"transactions_year_{date.year}"
-#    insert_year_data = (date.strftime('%Y-%m-%d'), stock_id, quantity, profit_or_loss, buyID, sellID)
-#    
-#    # Define the SQL insert statement
-#    insert_sql = f"""
-#    INSERT INTO {transaction_table} (
-#        transaction_date, 
-#        stock_symbol,
-#        quantity,
-#        profit_or_loss, 
-#        buy_id,
-#        sell_id
-#    ) VALUES (%s, %s, %s, %s, %s, %s)
-#    RETURNING id;
-#    """
-#    
-#    try:
-#        # Connect and execute the SQL statement
-#        with engine.connect() as connection:
-#            result = connection.execute(insert_sql, insert_year_data)
-#            serial_id = result.fetchone()[0]  # Get the returning id
-#        return serial_id
-#
-#    except Exception as e:
-#        print(f"Error during transaction insert: {e}")
-#        return None
-
-#def insert_transaction_year_sell(user, password, database, date, 
-#        stock_id, quantity, profit_or_loss, buyID, sellID):
-#    transaction_table = f"transactions_year_{date.year}"
-#    print(f"sellID {sellID}")
-#    #insert_year_data = (date.strftime('%Y-%m-%d'), stock_id, quantity, profit_or_loss, buyID, sellID)
-#    # Prepare the data to insert
-#    insert_year_data = {
-#        'transaction_date': date.strftime('%Y-%m-%d'),
-#        'stock_symbol': stock_id,
-#        'quantity': quantity,
-#        'profit_or_loss': profit_or_loss,
-#        'buy_id': buyID,
-#        'sell_id': sellID
-#    }
-#    insert_sql = f"""
-#        INSERT INTO {transaction_table} (
-#            transaction_date, 
-#            stock_symbol,
-#            quantity,
-#            profit_or_loss, 
-#            buy_id,
-#            sell_id
-#            ) VALUES (:transaction_date, :stock_symbol, :quantity, :profit_or_loss, :buy_id, :sellID) 
-#            RETURNING id;
-#        """
-#    serial_id = insert_data(user, password, database, insert_sql, insert_year_data)
-#    return serial_id
 
 def insert_transaction_year_stock_dividend(user, password, database, date, stock_id, profit_or_loss, sellID):
     transaction_table = f"transactions_year_{date.year}"
@@ -420,13 +301,13 @@ def create_transaction_year_table(user, password, database, year):
 
 
 def fetch_inventory_data(user, password):
-    data_base_name = f"{user}_stock_db"
-    df = dump_table(user, password, data_base_name, 'inventory')
+    database_name = f"{user}_stock_db"
+    df = dump_table(user, password, database_name, 'inventory')
     return df 
 
 def fetch_group_inventory(user, password):
-    data_base_name = f"{user}_stock_db"
-    df = dump_table(user, password, data_base_name, 'inventory')
+    database_name = f"{user}_stock_db"
+    df = dump_table(user, password, database_name, 'inventory')
     grouped_df = df.groupby('stock_symbol').agg(
             total_remaining_cost=('remaining_cost', 'sum'),
             total_remaining_quantity=('remaining_quantity', 'sum')
@@ -437,8 +318,8 @@ def fetch_group_inventory(user, password):
     return grouped_df
 
 def fetch_stock_inventory(user, password, stock_symbol):
-    data_base_name = f"{user}_stock_db"
-    df = dump_table(user, password, data_base_name, 'inventory')
+    database_name = f"{user}_stock_db"
+    df = dump_table(user, password, database_name, 'inventory')
     # 篩選 stock_symbol 
     filtered_df = df[df['stock_symbol'] == stock_symbol]
     return filtered_df
