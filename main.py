@@ -103,11 +103,11 @@ if __name__ == "__main__":
     transaction_tax = math.floor(price * quantity * 0.001425 * 0.35)
     securities_transaction_tax = math.floor(price * quantity * 0.003)
     #create_stock_id_table(user, password, 'user_ck_stock_db', stock_id)
-    test_insert_stock_data(user, password, 'user_ck_stock_db', 
-        date_data, stock_id, quantity, price, transaction_tax)
+    #create_stock_id_table(user, password, 'user_ck_stock_db', stock_id)
+    #test_insert_stock_data(user, password, 'user_ck_stock_db', 
+    #    date_data, stock_id, quantity, price, transaction_tax)
     
-    exit(1)
-
+    #create_transaction_year_table(user, password, 'user_ck_stock_db', 2024)
     #connect_to_database()
     #list_tables()
     #exit(0)
@@ -142,41 +142,22 @@ if __name__ == "__main__":
     #add_stock_dividend(user, password, date_data, stock_id, quantity)
 
     stock_id = '2002'
-    date_data = datetime(2024, 11,20)
+    date_data = datetime(2024, 11,21)
     price = 25.7
-    quantity = 10
+    quantity = 20
     TradeValue = round(price * quantity, 3)
     transaction_tax = math.floor(TradeValue * 0.001425 * 0.35)
     securities_transaction_tax = math.floor(TradeValue * 0.003)
     amount = math.floor(TradeValue + transaction_tax)
     
-    print(f"({stock_id}){quantity} * {price} = {TradeValue}")
-    print(f"Net Settlement Amount = {TradeValue} + {transaction_tax} = {amount}")
-
-    transaction_table = f"transactions_stock_{stock_id}"
-    insert_buy_data = (date.strftime('%Y-%m-%d'), quantity, price, 'buy', transaction_tax)
-
-    insert_sql = f"""
-    INSERT INTO {transaction_table} (
-        transaction_date, 
-        quantity, 
-        transaction_price, 
-        transaction_type,
-        transaction_tax 
-        ) VALUES (%s, %s, %s, %s, %s)
-        RETURNING id;
-    """
-    insert_data(user, password, 'ck_stock_db', insert_sql, insert_buy_data)
-    exit(0)
-
     #add_buy_transaction(user, password, date_data, stock_id, quantity, price, 
     #    transaction_tax, amount)
 
     #date_data = datetime(2024, 11,29)
-    #add_sell_transaction(user, password, date_data, 
-    #    stock_id, quantity, price, transaction_tax, securities_transaction_tax)
-    #insert_transaction_year_sell(user, password, 'ck_stock_db', date_data, 
-    #    stock_id, quantity, 5000, 3, 3)
+    add_sell_transaction(user, password, date_data, 
+        stock_id, quantity, price, transaction_tax, securities_transaction_tax)
+    insert_transaction_year_sell(user, password, 'ck_stock_db', date_data, 
+        stock_id, quantity, 102, 3, 5)
     #main_menu()
     ###stock_table_name = f"transaction_stock_{stock_id}"
     ###connect_to_db('ckyeh', 'woodgate', 'postgres')

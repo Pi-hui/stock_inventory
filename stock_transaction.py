@@ -120,7 +120,6 @@ def add_sell_transaction(user, password, date,
     print(f"sell stock transaction: ")
     print(sell_transaction_fd)
     print("輸入指定賣出id與數量, 使用\",\"分隔。如賣出id 4, 10股請輸入\'4,10\'")
-    
 
     while remaining_sell_quantity > 0:
         user_input = input(f"剩餘股數 {remaining_sell_quantity}\n id, 數量:")
@@ -140,7 +139,6 @@ def add_sell_transaction(user, password, date,
         allocated_buy_rate = entry_quantity / buy_df['remaining_quantity'].iloc[0]
         allocated_buy_cost = math.ceil(allocated_buy_rate * buy_df['remaining_cost'].iloc[0]) 
         buy_id = buy_df['stock_id_fk'].iloc[0]
-
 
         remaining_buy_cost = buy_df['remaining_cost'].iloc[0] - allocated_buy_cost
         remaining_buy_quantity = buy_df['remaining_quantity'].iloc[0] - entry_quantity
@@ -171,7 +169,7 @@ def add_sell_transaction(user, password, date,
 
     print("Start to write to DB...")
     # insert transaction stock to get sell ID
-    user_database_name = f"user_{user}_stock_db"
+    user_database_name = f"{user}_stock_db"
     ransaction_sell_id = insert_transaction_stock_sell(user, password, user_database_name,
        date, stock_id, quantity, price, transaction_tax, securities_transaction_tax)
     transaction_sell_id = 3
@@ -184,7 +182,7 @@ def add_sell_transaction(user, password, date,
     #        stock_id, row['quantity'], row['profit_or_loss'], row['buy_id'], transaction_sell_id)
     # insert transaction year table
     transaction_year_table_name = f"transactions_year_{date.year}"
-    database_name = f"user_{user}_stock_db"
+    database_name = f"{user}_stock_db"
     for index, row in entry_stock_year_recode.iterrows():
         print(f"第 {index + 1} 列資料: {row.to_dict()}")
         insert_transaction_year_sell(user, password, database_name, date, 
@@ -192,6 +190,8 @@ def add_sell_transaction(user, password, date,
             transaction_sell_id)
 
 
+
+# 2024-10-20 insert data work
 def test_insert_stock_data(user, password, dbname, 
         date_data, stock_id, quantity, price, transaction_tax,
         host='localhost', port='5432'):

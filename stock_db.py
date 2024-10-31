@@ -105,7 +105,7 @@ def insert_transaction_year_sell(user, password, database, date,
         'sell_id': sellID
     }
     
-    insert_sql = text(f"""
+    insert_sql = f"""
         INSERT INTO {transaction_table} (
             transaction_date, 
             stock_symbol,
@@ -122,48 +122,22 @@ def insert_transaction_year_sell(user, password, database, date,
             :sell_id
         ) 
         RETURNING id;
-    """)
+    """
     
     serial_id = insert_data(user, password, database, insert_sql, insert_year_data)
     return serial_id
 
-#def insert_transaction_stock_sell(user, password, database, date, stock_id, 
-#        quantity, price, transaction_tax, securities_transaction_tax):
-#    transaction_table = f"transactions_stock_{stock_id}"
-#    insert_sell_data = {
-#        'transaction_date': date.strftime('%Y-%m-%d'),
-#        'quantity': quantity,
-#        'transaction_price': price,
-#        'transaction_type': 'sell',
-#        'transaction_tax': transaction_tax,
-#        'securities_transaction_tax': securities_transaction_tax
-#    }
-#    
-#    insert_sql = f"""
-#    INSERT INTO {transaction_table} (
-#        transaction_date, 
-#        quantity, 
-#        transaction_price, 
-#        transaction_type,
-#        transaction_tax,
-#        securities_transaction_tax 
-#        ) VALUES (
-#        :transaction_date, 
-#        :quantity, 
-#        :transaction_price, 
-#        :transaction_type,
-#        :transaction_tax,
-#        :securities_transaction_tax
-#        )
-#        RETURNING id;
-#    """
-#    serial_id = insert_data(user, password, database, insert_sql, insert_sell_data)
-#    return serial_id
 def insert_transaction_stock_sell(user, password, database, date, stock_id, 
         quantity, price, transaction_tax, securities_transaction_tax):
     transaction_table = f"transactions_stock_{stock_id}"
-    insert_buy_data = (date.strftime('%Y-%m-%d'), quantity, price, 'sell', 
-        transaction_tax, securities_transaction_tax)
+    insert_sell_data = {
+        'transaction_date': date.strftime('%Y-%m-%d'),
+        'quantity': quantity,
+        'transaction_price': price,
+        'transaction_type': 'sell',
+        'transaction_tax': transaction_tax,
+        'securities_transaction_tax': securities_transaction_tax
+    }
     
     insert_sql = f"""
     INSERT INTO {transaction_table} (
@@ -173,11 +147,37 @@ def insert_transaction_stock_sell(user, password, database, date, stock_id,
         transaction_type,
         transaction_tax,
         securities_transaction_tax 
-        ) VALUES (%s, %s, %s, %s, %s, %s)
+        ) VALUES (
+        :transaction_date, 
+        :quantity, 
+        :transaction_price, 
+        :transaction_type,
+        :transaction_tax,
+        :securities_transaction_tax
+        )
         RETURNING id;
     """
-    serial_id = insert_data(user, password, database, insert_sql, insert_buy_data)
+    serial_id = insert_data(user, password, database, insert_sql, insert_sell_data)
     return serial_id
+#def insert_transaction_stock_sell(user, password, database, date, stock_id, 
+#        quantity, price, transaction_tax, securities_transaction_tax):
+#    transaction_table = f"transactions_stock_{stock_id}"
+#    insert_buy_data = (date.strftime('%Y-%m-%d'), quantity, price, 'sell', 
+#        transaction_tax, securities_transaction_tax)
+#    
+#    insert_sql = f"""
+#    INSERT INTO {transaction_table} (
+#        transaction_date, 
+#        quantity, 
+#        transaction_price, 
+#        transaction_type,
+#        transaction_tax,
+#        securities_transaction_tax 
+#        ) VALUES (%s, %s, %s, %s, %s, %s)
+#        RETURNING id;
+#    """
+#    serial_id = insert_data(user, password, database, insert_sql, insert_buy_data)
+#    return serial_id
 
 def insert_transaction_stock_stock_dividend(user, password, database, date, stock_id, quantity):
     transaction_table = f"transactions_stock_{stock_id}"
@@ -225,73 +225,73 @@ def insert_transaction_year_cash_dividend(user, password, database, date, stock_
     serial_id = insert_data(user, password, database, insert_sql, insert_year_data)
     return serial_id
 
-def insert_transaction_year_sell(user, password, database, date, 
-        stock_id, quantity, profit_or_loss, buyID, sellID, host='localhost', port='5432'):
-    
-    # Build the connection string
-    engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
-    
-    # Prepare data for insertion (wrap the tuple in a list)
-    transaction_table = f"transactions_year_{date.year}"
-    #insert_year_data = (date.strftime('%Y-%m-%d'), stock_id, quantity, profit_or_loss, buyID, sellID)
-    insert_year_data = {
-        'transaction_date': date.strftime('%Y-%m-%d'),
-        'stock_symbol': stock_id,
-        'quantity': quantity,
-        'profit_or_loss': profit_or_loss,
-        'buy_id': buyID,
-        'sell_id': sellID
-    }
-    insert_sql = text(f"""
-        INSERT INTO {transaction_table} (
-            transaction_date, 
-            stock_symbol,
-            quantity,
-            profit_or_loss, 
-            buy_id,
-            sell_id
-        ) VALUES (
-            :transaction_date, 
-            :stock_symbol, 
-            :quantity, 
-            :profit_or_loss, 
-            :buy_id, 
-            :sell_id
-        ) 
-        RETURNING id;
-    """)
- 
-    # Define the SQL insert statement
-    #insert_sql = f"""
-    #INSERT INTO {transaction_table} (
-    #    transaction_date, 
-    #    stock_symbol,
-    #    quantity,
-    #    profit_or_loss, 
-    #    buy_id,
-    #    sell_id
-    #) VALUES (%s, %s, %s, %s, %s, %s)
-    #RETURNING id;
-    #"""
-    
-    try:
-        # Connect and execute the SQL statement
-        with engine.connect() as connection:
-            print("database connection")
-            print(f"insert_sql: {insert_sql}")
-            print(f"insert_year_data: {insert_year_data}")
-            result = connection.execute(insert_sql, insert_year_data)
-            serial_id = result.fetchone()[0]  # Get the returning id
-            print(f"serial_id {serial_id}")
-        if serial_id is not None:
-            print(f"Transaction successfully inserted with id: {serial_id}")
-        else:
-            print("Failed to insert transaction")
-        return serial_id
-
-    except Exception as e:
-        print(f"Error during transaction insert: {e}")
-        return None
+#def insert_transaction_year_sell(user, password, database, date, 
+#        stock_id, quantity, profit_or_loss, buyID, sellID, host='localhost', port='5432'):
+#    
+#    # Build the connection string
+#    engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{database}')
+#    
+#    # Prepare data for insertion (wrap the tuple in a list)
+#    transaction_table = f"transactions_year_{date.year}"
+#    #insert_year_data = (date.strftime('%Y-%m-%d'), stock_id, quantity, profit_or_loss, buyID, sellID)
+#    insert_year_data = {
+#        'transaction_date': date.strftime('%Y-%m-%d'),
+#        'stock_symbol': stock_id,
+#        'quantity': quantity,
+#        'profit_or_loss': profit_or_loss,
+#        'buy_id': buyID,
+#        'sell_id': sellID
+#    }
+#    insert_sql = text(f"""
+#        INSERT INTO {transaction_table} (
+#            transaction_date, 
+#            stock_symbol,
+#            quantity,
+#            profit_or_loss, 
+#            buy_id,
+#            sell_id
+#        ) VALUES (
+#            :transaction_date, 
+#            :stock_symbol, 
+#            :quantity, 
+#            :profit_or_loss, 
+#            :buy_id, 
+#            :sell_id
+#        ) 
+#        RETURNING id;
+#    """)
+# 
+#    # Define the SQL insert statement
+#    #insert_sql = f"""
+#    #INSERT INTO {transaction_table} (
+#    #    transaction_date, 
+#    #    stock_symbol,
+#    #    quantity,
+#    #    profit_or_loss, 
+#    #    buy_id,
+#    #    sell_id
+#    #) VALUES (%s, %s, %s, %s, %s, %s)
+#    #RETURNING id;
+#    #"""
+#    
+#    try:
+#        # Connect and execute the SQL statement
+#        with engine.connect() as connection:
+#            print("database connection")
+#            print(f"insert_sql: {insert_sql}")
+#            print(f"insert_year_data: {insert_year_data}")
+#            result = connection.execute(insert_sql, insert_year_data)
+#            serial_id = result.fetchone()[0]  # Get the returning id
+#            print(f"serial_id {serial_id}")
+#        if serial_id is not None:
+#            print(f"Transaction successfully inserted with id: {serial_id}")
+#        else:
+#            print("Failed to insert transaction")
+#        return serial_id
+#
+#    except Exception as e:
+#        print(f"Error during transaction insert: {e}")
+#        return None
 
 #def insert_transaction_year_sell(user, password, database, date, 
 #        stock_id, quantity, profit_or_loss, buyID, sellID, host='localhost', port='5432'):

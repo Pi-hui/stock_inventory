@@ -91,15 +91,16 @@ def create_table(username, password, database, create_table_sql, host='localhost
 #        print(f"Error occurred during insertion: {e}")
 #        return None
 
+# insert data work 2024/10/20
 def insert_data(username, password, database, insert_sql, values, host='localhost', port='5432'):
     try:
         # Use SQLAlchemy to create an engine
         engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{database}')
 
-        print(f"db_connect {values}")
         # Use the engine to connect and execute the SQL insert statement
         with engine.connect() as connection:
             result = connection.execute(text(insert_sql), values)
+            connection.commit()
 
             # If there's a value to return, like a serial ID
             if result.returns_rows:
