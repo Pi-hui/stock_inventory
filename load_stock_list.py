@@ -26,23 +26,6 @@ def fetch_stock_list_as_df():
     finally:
         engine.dispose()
 
-    ## Connect to the PostgreSQL database
-    #conn = psycopg2.connect(
-    #    host="localhost",
-    #    database="stock_info",  # Use your 'stock_info' database name
-    #    user="ck",
-    #    password="woodgate"
-    #)
-
-    ## SQL query to fetch all data from 'stock_list' table
-    #query = "SELECT * FROM stock_list;"
-
-    ## Use pandas to execute the query and fetch data into a DataFrame
-    #df = pd.read_sql_query(query, conn)
-
-    ## Close the connection
-    #conn.close()
-
     return df
 
 def get_stock_name_by_code(stock_code):
@@ -57,6 +40,12 @@ def get_stock_name_by_code(stock_code):
         return result.values[0]  # 返回第一個匹配的股票名稱
     else:
         return None  # 如果找不到，返回 None
+
+def get_stock_list():
+    global stock_list  # 聲明 stock_list 為全局變數
+    if stock_list is None:  # 檢查 stock_list 是否為 None
+        stock_list = fetch_stock_list_as_df()  # 初始化 stock_list
+    return stock_list 
 
 # Example usage:
 #df = fetch_stock_list_as_df()

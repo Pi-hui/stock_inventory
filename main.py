@@ -5,7 +5,7 @@ from system_db_handle import *
 from datetime import datetime
 from db_connection import *
 from stock_db import *
-from load_stock_list import get_stock_name_by_code, fetch_stock_list_as_df
+from load_stock_list import get_stock_name_by_code
 from stock_transaction import *
 from BankOfTaiwan import *
 
@@ -17,35 +17,42 @@ transaction stock  table 加入 Net Settlement Amount, 淨結算金額
 買入用負數，賣出用正數
 """
 
+user = "ck"
+password = "woodgate"
 def main_menu():
     """
     主選單函數，用來處理命令行選單選項
     """
     while True:
         print("\n----- Database Console Menu -----")
-        print("1. Connect to a Database")
-        print("2. List all Tables in the Database")
-        print("3. Dump Table Data")
-        print("4. List all Databases on the Server")
-        print("5. Close Database Connection")
+        print("1. 顯示庫存")
+        print("2. 買入股票")
+        print("3. 賣出股票")
+        print("4. 現金除息")
+        print("5. 股票除權")
         print("6. Exit")
         choice = input("Please select an option (1-6): ")
 
         if choice == '1':
-            connect_to_database()
-        #elif choice == '2':
-        #    list_all_tables()
+            fetch_group_inventory(user, password)
+        elif choice == '2':
+            buy_stock()
+            #list_all_tables()
         elif choice == '3':
-            dump_table_data()
+            sell_stock()
+            #dump_table_data()
         elif choice == '4':
-            list_all_databases()
+            cash_dividend()
+            #list_all_databases()
         elif choice == '5':
-            close_db_connection()
+            stock_dividend()
+            #close_db_connection()
         elif choice == '6':
             print("Exiting the program.")
             break
         else:
             print("Invalid choice, please select a valid option.")
+    exit(0)
 
 def connect_to_database():
     """
@@ -91,18 +98,90 @@ def close_db_connection():
     """
     close_connection()
 
-if __name__ == "__main__":
-    #list_postgresql_users()
-    atabase_name = 'ck_stock_db'
+def buy_stock():
+    date_string = input("輸入交易日期(YYYYMMDD):")
+    date_data = datetime.strptime(date_string, "%Y%m%d").date()
 
-    user = 'ck'
-    password = 'woodgate'
-    stock_id = '8299'
-    price = 500
-    quantity = 50
-    date_data = datetime(2024, 11,20)
-    transaction_tax = math.floor(price * quantity * 0.001425 * 0.35)
-    securities_transaction_tax = math.floor(price * quantity * 0.003)
+    stock_id = input("代號:")
+    user_input = input("股數:")
+    quantity = int(user_input)
+
+    user_input = input("價格:")
+    price = float(user_input)
+    
+    amount = quantity * price
+    
+    default_tax = math.floor(amount * 0.001425 * 0.35)
+    input_string = input(f"手續費({default_tax}): ")
+    tax = int(input_string) if input_string else default_tax
+    
+    default_amount = math.floor(amount) + tax
+    input_string = input(f"淨收付金額({default_amount}):")
+    amount = int(input_string) if input_string else default_amount 
+    
+     
+    print(f"BUY {get_stock_name_by_code(stock_id)} {quantity} @ {price}NTD with tax {tax} = {amount}")
+    user_input = input("寫入資料庫(y/n):")
+    if user_input.lower() != "y":
+        print("未寫入資料庫")
+        return
+        
+    print("寫入資料庫")
+    add_buy_transaction(user, password, date_data, stock_id, quantity, price, tax, amount)
+    
+
+def sell_stock():
+    date_string = input("輸入交易日期(YYYYMMDD):")
+    date_data = datetime.strptime(date_string, "%Y%m%d").date()
+
+    stock_id = input("代號:")
+    user_input = input("股數:")
+    quantity = int(user_input)
+
+    user_input = input("價格:")
+    price = float(user_input)
+    
+    amount = quantity * price
+    
+    default_tax = math.floor(amount * 0.001425 * 0.35)
+    input_string = input(f"手續費({default_tax}): ")
+    transaction_tax = int(input_string) if input_string else default_tax
+
+    default_securities_transaction_tax = math.floor(amount * 0.003)
+    input_string = input(f"證交稅({default_securities_transaction_tax}): ")
+    securities_transaction_tax = int(input_string) if input_string else default_securities_transaction_tax 
+    
+    default_amount = math.floor(amount) - transaction_tax -securities_transaction_tax
+    input_string = input(f"淨收付金額({default_amount}):")
+    amount = int(input_string) if input_string else default_amount 
+     
+    print(f"Sell {get_stock_name_by_code(stock_id)} {quantity} @ {price}NTD with tax {transaction_tax} securities_transaction_tax {securities_transaction_tax} = {amount}")
+    user_input = input("寫入資料庫(y/n):")
+    if user_input.lower() != "y":
+        print("未寫入資料庫")
+        return
+        
+    print("寫入資料庫")
+    add_sell_transaction(user, password, date_data, 
+        stock_id, quantity, price, transaction_tax, 
+        securities_transaction_tax)
+
+
+if __name__ == "__main__":
+    user
+    main_menu()
+    #fetch_group_inventory('ck', 'woodgate')
+    #list_postgresql_users()
+    #atabase_name = 'ck_stock_db'
+
+    #user = 'ck'
+    #password = 'woodgate'
+    #stock_id = '8299'
+    #price = 500
+    #quantity = 50
+    #date_data = datetime(2024, 11,20)
+    #transaction_tax = math.floor(price * quantity * 0.001425 * 0.35)
+    #securities_transaction_tax = math.floor(price * quantity * 0.003)
     
     #list_all_tables(user, password)
     #create_stock_id_table(user, password, 'user_ck_stock_db', stock_id)
@@ -140,27 +219,26 @@ if __name__ == "__main__":
     #date_data = datetime(2024, 10,17)
     #add_buy_transaction(user, password, date_data, '2330', 4, 1088.27, 1, 4354)
 
-    add_cash_dividend(user, password, date_data, stock_id, price)
-    add_stock_dividend(user, password, date_data, stock_id, quantity)
+    #add_cash_dividend(user, password, date_data, stock_id, price)
+    #add_stock_dividend(user, password, date_data, stock_id, quantity)
 
-    stock_id = '2'
-    date_data = datetime(2024, 11,23)
-    price = 180
-    quantity = 3000
-    TradeValue = round(price * quantity, 3)
-    transaction_tax = math.floor(TradeValue * 0.001425 * 0.35)
-    securities_transaction_tax = math.floor(TradeValue * 0.003)
-    amount = math.floor(TradeValue + transaction_tax)
-    
-    add_buy_transaction(user, password, date_data, stock_id, quantity, price, 
-        transaction_tax, amount)
+    #stock_id = '2'
+    #date_data = datetime(2024, 11,23)
+    #price = 180
+    #quantity = 3000
+    #TradeValue = round(price * quantity, 3)
+    #transaction_tax = math.floor(TradeValue * 0.001425 * 0.35)
+    #securities_transaction_tax = math.floor(TradeValue * 0.003)
+    #amount = math.floor(TradeValue + transaction_tax)
+    #
+    #add_buy_transaction(user, password, date_data, stock_id, quantity, price, 
+    #    transaction_tax, amount)
 
     #date_data = datetime(2024, 11,29)
     #add_sell_transaction(user, password, date_data, 
     #    stock_id, quantity, price, transaction_tax, securities_transaction_tax)
     #insert_transaction_year_sell(user, password, 'ck_stock_db', date_data, 
     #    stock_id, quantity, 102, 3, 5)
-    #main_menu()
     ###stock_table_name = f"transaction_stock_{stock_id}"
     ###connect_to_db('ckyeh', 'woodgate', 'postgres')
     ###if not (check_database_exists(user_database_name, 'ck', 'woodgate')):

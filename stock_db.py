@@ -3,6 +3,8 @@ from db_connection import *
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy import text
+from load_stock_list import get_stock_name_by_code, get_stock_list 
+
 
 db_system_name = 'ck'
 db_system_password = 'woodgate'
@@ -307,6 +309,7 @@ def fetch_inventory_data(user, password):
 
 def fetch_group_inventory(user, password):
     database_name = f"{user}_stock_db"
+    stock_list = get_stock_list()
     df = dump_table(user, password, database_name, 'inventory')
     grouped_df = df.groupby('stock_symbol').agg(
             total_remaining_cost=('remaining_cost', 'sum'),
@@ -315,6 +318,12 @@ def fetch_group_inventory(user, password):
 
     # 計算平均成本
     grouped_df['average_cost'] = grouped_df['total_remaining_cost'] / grouped_df['total_remaining_quantity']
+    grouped_df['average_cost'] = grouped_df['average_cost'].round(1)
+    grouped_df['name'] = grouped_df['stock_symbol'].map(stock_list.set_index('stock_code')['stock_name'])
+    #grouped_df = grouped_df[['stock_symbol', 'name', 'total_remaining_cost', 'total_remaining_quantity', 'average_cost']]
+    grouped_df['name'] = grouped_df['name'].str.ljust(grouped_df['name'].str.len().max())
+
+    print(grouped_df.to_string(index = False))
     return grouped_df
 
 def fetch_stock_inventory(user, password, stock_symbol):
@@ -323,6 +332,8 @@ def fetch_stock_inventory(user, password, stock_symbol):
     # 篩選 stock_symbol 
     filtered_df = df[df['stock_symbol'] == stock_symbol]
     return filtered_df
+
+
 
 
 

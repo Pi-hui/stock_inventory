@@ -170,8 +170,8 @@ def add_sell_transaction(user, password, date,
     # insert transaction stock to get sell ID
     user_database_name = f"{user}_stock_db"
 
-    ##transaction_sell_id = insert_transaction_stock_sell(user, password, user_database_name,
-    ##   date, stock_id, quantity, price, transaction_tax, securities_transaction_tax)
+    transaction_sell_id = insert_transaction_stock_sell(user, password, user_database_name,
+       date, stock_id, quantity, price, transaction_tax, securities_transaction_tax)
 
     # update inventory table
     for index, row in remain_inventory_recode.iterrows():
@@ -182,19 +182,18 @@ def add_sell_transaction(user, password, date,
                 int(row['id']))
         else:
             delete_inventory(user, password, int(row['id']))
-            print("delete id")
+            print(f"delete id {int(row['id'])}")
 
     print("_" * 20)
 
     # insert transaction year table
-
-    ##transaction_year_table_name = f"transactions_year_{date.year}"
-    ##database_name = f"{user}_stock_db"
-    ##for index, row in entry_stock_year_recode.iterrows():
-    ##    print(f"第 {index + 1} 列資料: {row.to_dict()}")
-    ##    insert_transaction_year_sell(user, password, database_name, date, 
-    ##        stock_id, row['quantity'], row['profit_or_loss'], row['buy_id'], 
-    ##        transaction_sell_id)
+    transaction_year_table_name = f"transactions_year_{date.year}"
+    database_name = f"{user}_stock_db"
+    for index, row in entry_stock_year_recode.iterrows():
+        print(f"第 {index + 1} 列資料: {row.to_dict()}")
+        insert_transaction_year_sell(user, password, database_name, date, 
+            stock_id, row['quantity'], row['profit_or_loss'], row['buy_id'], 
+            transaction_sell_id)
 
 
 
