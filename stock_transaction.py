@@ -81,7 +81,7 @@ def add_sell_transaction(user, password, date,
     NetSettlementAmount = TransactionAmount - transaction_tax - securities_transaction_tax
 
     stock_df = fetch_stock_inventory(user, password, stock_id)
-    print(stock_df.to_string(index=False))  
+    #print(stock_df.to_string(index=False))  
     total_sell_quantity = quantity
     total_sell_cost = NetSettlementAmount 
     remaining_sell_quantity = quantity
@@ -116,11 +116,14 @@ def add_sell_transaction(user, password, date,
     sell_transaction_fd['Amount'] = sell_transaction_fd['transaction_price'] * sell_transaction_fd['quantity'] - (
         transaction_tax + securities_transaction_tax)
 
-    print(f"sell stock transaction: ")
-    print(sell_transaction_fd)
     print("輸入指定賣出id與數量, 使用\",\"分隔。如賣出id 4, 10股請輸入\'4,10\'")
 
     while remaining_sell_quantity > 0:
+        print(f"sell stock transaction: ")
+        
+        print((stock_df[~stock_df['id'].isin(remain_inventory_recode['id'])]).
+            to_string(index=False))
+        
         user_input = input(f"剩餘股數 {remaining_sell_quantity}\n id, 數量:")
         values = user_input.split(',')
         values = [value.strip() for value in values]
@@ -160,7 +163,7 @@ def add_sell_transaction(user, password, date,
         print(entry_stock_year_recode)
         print(f"計算損益獲利 {entry_quantity} {allocated_sell_cost}")
         print('-' * 20)
-
+    
     print(f"total profit or loss: {entry_stock_year_recode['profit_or_loss'].sum()}")
     is_write_to_db = input("Do you want to write to database?(y/n)")
     if is_write_to_db.lower() != "y":
