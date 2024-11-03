@@ -30,15 +30,15 @@ def add_buy_transaction(user, password, date,
         date, stock_id, quantity, price, transaction_tax)
     add_inventory(user, password, user_database_name, 
         date, stock_id, quantity, price, transaction_tax, transaction_cost, serial_id)
-    print(f"serial id {serial_id}")
+    #print(f"serial id {serial_id}")
 
 
-def add_cash_dividend(user, password, date, stock_id, price):
+def add_cash_dividend(user, password, date, stock_id, amount):
     user_database_name = f"{user}_stock_db"
     transID = insert_transaction_stock_cash_dividend(user, password, user_database_name,
-        date, stock_id, price)
+        date, stock_id, amount)
     insert_transaction_year_cash_dividend(user, password, user_database_name, 
-        date, stock_id, price, transID) 
+        date, stock_id, amount, transID) 
     
 def add_stock_dividend(user, password, date, stock_id, quantity):
     user_database_name = f"{user}_stock_db"

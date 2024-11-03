@@ -166,7 +166,37 @@ def sell_stock():
         stock_id, quantity, price, transaction_tax, 
         securities_transaction_tax)
 
+def cash_dividend():
+    date_string = input("輸入交易日期(YYYYMMDD):")
+    date_data = datetime.strptime(date_string, "%Y%m%d").date()
 
+    stock_id = input("代號:")
+
+    input_string = input("除息金額:")
+    amount = int(input_string)  
+    user_input = input("寫入資料庫(y/n):")
+    if user_input.lower() != "y":
+        print("未寫入資料庫")
+        return
+
+    add_cash_dividend(user, password, date_data, stock_id, amount)
+
+
+def stock_dividend():
+    date_string = input("輸入交易日期(YYYYMMDD):")
+    date_data = datetime.strptime(date_string, "%Y%m%d").date()
+
+    stock_id = input("代號:")
+    user_input = input("股數:")
+    quantity = int(user_input)
+    print(f"股票除權 {get_stock_name_by_code(stock_id)} {quantity}")
+    user_input = input("寫入資料庫(y/n):")
+    if user_input.lower() != "y":
+        print("未寫入資料庫")
+        return
+    
+    add_stock_dividend(user, password, date_data, stock_id, quantity)
+    
 if __name__ == "__main__":
     user
     main_menu()
@@ -219,8 +249,6 @@ if __name__ == "__main__":
     #date_data = datetime(2024, 10,17)
     #add_buy_transaction(user, password, date_data, '2330', 4, 1088.27, 1, 4354)
 
-    #add_cash_dividend(user, password, date_data, stock_id, price)
-    #add_stock_dividend(user, password, date_data, stock_id, quantity)
 
     #stock_id = '2'
     #date_data = datetime(2024, 11,23)

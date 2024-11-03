@@ -52,9 +52,7 @@ def check_table_exists(table_name, username, password, host='localhost', port='5
         inspector = inspect(engine)
         table_exists = table_name in inspector.get_table_names()
         
-        if table_exists:
-            print(f"Table '{table_name}' exists in the database '{dbname}'.")
-        else:
+        if not table_exists:
             print(f"Table '{table_name}' does not exist in the database '{dbname}'.")
 
         return table_exists
@@ -66,7 +64,7 @@ def check_table_exists(table_name, username, password, host='localhost', port='5
     finally:
         # Dispose the engine to close the connection
         engine.dispose()
-        print("Connection closed.")
+        #print("Connection closed.")
 
 
 def create_table(username, password, database, create_table_sql, host='localhost', port='5432'):
