@@ -51,9 +51,8 @@ def main_menu():
         elif choice == '6':
             print("Exiting the program.")
             break
-        elif choice == 'T' or choice == 't':
-            test_function()
-            break
+        #elif choice == 'T' or choice == 't':
+        #    test_function()
         else:
             print("Invalid choice, please select a valid option.")
     exit(0)
