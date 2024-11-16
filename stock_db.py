@@ -3,7 +3,7 @@ from db_connection import *
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy import text
-from load_stock_list import get_stock_name_by_code, get_stock_list 
+from load_stock_list import get_stock_name_by_code, get_stock_list, get_marcket_type
 
 
 db_system_name = 'ck'
@@ -319,6 +319,7 @@ def fetch_group_inventory(user, password):
     # 計算平均成本
     grouped_df['average_cost'] = grouped_df['total_remaining_cost'] / grouped_df['total_remaining_quantity']
     grouped_df['average_cost'] = grouped_df['average_cost'].round(1)
+    grouped_df['market'] = grouped_df['stock_symbol'].map(stock_list.set_index('stock_code')['market_type'])
     grouped_df['name'] = grouped_df['stock_symbol'].map(stock_list.set_index('stock_code')['stock_name'])
     #grouped_df = grouped_df[['stock_symbol', 'name', 'total_remaining_cost', 'total_remaining_quantity', 'average_cost']]
     grouped_df['name'] = grouped_df['name'].str.ljust(grouped_df['name'].str.len().max())

@@ -47,6 +47,20 @@ def get_stock_list():
         stock_list = fetch_stock_list_as_df()  # 初始化 stock_list
     return stock_list 
 
+def get_marcket_type(stock_code):
+    global stock_list  # 聲明 stock_list 為全局變數
+    if stock_list is None:  # 檢查 stock_list 是否為 None
+        stock_list = fetch_stock_list_as_df()  # 初始化 stock_list
+
+    # 檢查 stock_code 是否存在於 DataFrame 的 'stock_code' 列
+    result = stock_list[stock_list['stock_code'] == stock_code]['market_type']
+    
+    if not result.empty:  # 檢查結果是否為空
+        return result.values[0]  # 返回第一個匹配的股票名稱
+    else:
+        return None  # 如果找不到，返回 None
+    
+    return
 # Example usage:
 #df = fetch_stock_list_as_df()
 

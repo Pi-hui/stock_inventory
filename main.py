@@ -5,7 +5,7 @@ from system_db_handle import *
 from datetime import datetime
 from db_connection import *
 from stock_db import *
-from load_stock_list import get_stock_name_by_code
+from load_stock_list import * #get_stock_name_by_code
 from stock_transaction import *
 from BankOfTaiwan import *
 
@@ -31,6 +31,7 @@ def main_menu():
         print("4. 現金除息")
         print("5. 股票除權")
         print("6. Exit")
+        print("T. test function")
         choice = input("Please select an option (1-6): ")
 
         if choice == '1':
@@ -50,9 +51,19 @@ def main_menu():
         elif choice == '6':
             print("Exiting the program.")
             break
+        elif choice == 'T' or choice == 't':
+            test_function()
+            break
         else:
             print("Invalid choice, please select a valid option.")
     exit(0)
+
+def test_function():
+    stock_id = input("代號:")
+    market_type = get_marcket_type(stock_id)
+    stock_name = get_stock_name_by_code(stock_id)
+    print(f"{stock_name} is {market_type}")
+    return 
 
 def connect_to_database():
     """
@@ -281,3 +292,4 @@ if __name__ == "__main__":
     #name = get_stock_name_by_code('2330')
     #print(name)
    
+
